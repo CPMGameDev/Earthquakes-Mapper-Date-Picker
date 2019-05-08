@@ -83,16 +83,17 @@
         $mapDataSource = "https://storage.googleapis.com/mapsdevsite/json/quakes.geo.json";
     ?>
 
-    <script>  
+<script>  
 
     var map;
+    var markers = [];
     var latitd;
     var longtd;
     var titleName; 
     var startDate = new Date();
     var endDate = new Date();
 
-    function LoadMap() {
+    function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
             center: new google.maps.LatLng(-26, 140),
             zoom: 3
@@ -120,16 +121,38 @@
         }); */
     }
 
-    function CreateMarker(latlng) {
+    function createMarker(latlng) {
         var marker = new google.maps.Marker({
-            map: map,
-            position: latlng
+            position: latlng,
+            map: map
         });
+
+        markers.push(marker);
     }
 
-    function DisplayMarker() {
+    function displayMarker() {
+        // console.log('Markers: ' + latitd + ':' + longtd + '\n')
         var latlng = new google.maps.LatLng(latitd, longtd);
-        CreateMarker(latlng);
+        createMarker(latlng);
+    }
+
+    function setMapOnAll(map) {
+        for (var i = 0; i < markers.length; i++) {
+          markers[i].setMap(map);
+        }
+      }
+
+    function showMarkers() {
+        setMapOnAll(map);
+    }
+
+    function clearMarkers() {
+        setMapOnAll(null);
+    }
+
+    function deleteMarkers() {
+        clearMarkers();
+        markers = [];
     }
 
     function eqfeed_callback(data) {
@@ -156,54 +179,47 @@
         var endDateTimePicker = $("#endDateTimePicker").data("kendoDatePicker");
 
         $("#update").click(function() {
-            startDate = kendo.toString(kendo.parseDate(new Date()), 'yyyy-MM-dd-');
-            endDate = kendo.toString(kendo.parseDate(new Date()), 'yyyy-MM-dd-');
-            GetQuakes();
+            startDate = kendo.toString(kendo.parseDate(startDateTimePicker.value()), 'yyyy-MM-dd');
+            endDate = kendo.toString(kendo.parseDate(endDateTimePicker.value()), 'yyyy-MM-dd');
+            
+            deleteMarkers();
+            getQuakes();
+            showMarkers();
         });    
 
-        function GetQuakes() {
-            
+        function getQuakes() {
+            // console.log('StartDate: ' + startDate + ', EndDate: ' + endDate + '\n');
             $.ajax({
-                        url: 'http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=' + startDate + '&endtime=' + endDate,
-                        dataType : 'json'
-                    })
-                        .done(function(data) {
-                        $.each(data.features, function(key, val) {
-                            var coord = val.geometry.coordinates;
-                            locationD = {
-                                latd: coord[0],
-                                lngd: coord[1]
-                            };
-                            latitd = locationD.latd;
-                            longtd = locationD.lngd;
-                            DisplayMarker();        
-                        });
-                    })
+                url: 'http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=' + startDate + '&endtime=' + endDate,
+                dataType : 'json'
+            })
+                .done(function(data) {
 
-            console.log("Start date is: " + startDate);
-        }
+                // console.log('data.features: '+ data.features);
+                $.each(data.features, function(key, val) {
+                    var coord = val.geometry.coordinates;
+                    locationD = {
+                        latd: coord[0],
+                        lngd: coord[1]
+                    };
+                    latitd = locationD.latd;
+                    longtd = locationD.lngd;
+                    titleName = val.properties.title;
+                    // console.log(latitd, longtd);
+                    displayMarker();        
+                });
+            })
+                .fail(function(e){
+                console.log(e);
+            })
+                .always(function(){
+                console.log('ajax executed');
+            });
+        }  
     });
-
-/* $(document).ready(function() {
-
-            // create DateTimePicker from input HTML element
-
-
-            $("#endDateTimePicker").kendoDateTimePicker({
-                format: "MM/dd/yyyy",
-                value: new Date(2000, 10, 10, 10, 0, 0),
-                dateInput: true
-            });
-
-            var datepicker = $("#startDateTimePicker").data("kendoDatePicker");
-
-            $("#update").click(function() {
-                alert(datepicker.value());
-            });
-        }) ; */
-    </script>   
+    </script>  
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src= "https://maps.googleapis.com/maps/api/js?key=AIzaSyDrhmCE5YeH0r9Kkeq-v4ZXBd87UvwCOrw&callback=LoadMap" async defer></script>
+    <script src= "https://maps.googleapis.com/maps/api/js?key=AIzaSyDrhmCE5YeH0r9Kkeq-v4ZXBd87UvwCOrw&callback=initMap" async defer></script>
   </body>
 </html>
