@@ -9,15 +9,45 @@
     <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.1.220/styles/kendo.common-material.min.css" />
     <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.1.220/styles/kendo.material.min.css" />
     <link rel="stylesheet" href="https://kendo.cdn.telerik.com/2019.1.220/styles/kendo.material.mobile.min.css" />
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" type="text/javascript"></script>
     <script src="https://kendo.cdn.telerik.com/2019.1.220/js/kendo.all.min.js"></script>
 
-
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Using PHP with Google Maps</title>
+    <title>Earthquakes Mapper/DateTime Picker</title>
 </head>
 <body>
+
+    <!-- Form handling --> 
+
+    <?php 
+
+    $mapDataSourceErr = $googleMapKeyErr = "";
+    $mapDataSource = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson";
+    $googleMapKey = "AIzaSyCgW1aVXMAw8od0VT8DnflvrMIVJFofqB4";
+
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (empty($_POST["mapDataSource"])) {
+            $mapDataSourceErr = "* Map is required";
+        } else {
+            $mapDataSource = test_input($_POST["mapDataSource"]);
+        }
+    
+        if (empty($_POST["googleMapKey"])) {
+            $googleMapKeyErr = "* Key is required";
+        } else {
+            $googleMapKey = test_input($_POST["googleMapKey"]);
+        }
+    }
+
+    function test_input($data) {
+        $data = trim($data);
+       return $data; 
+    }
+
+    ?>
+
+    <!-- Fixed Top Navbar: DateTimePicker, Home & Options section -->  
+
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
         <div class= "container">
             <a href="#datePickerModalCenter" role="button" class="btn" data-toggle="modal">
@@ -29,21 +59,24 @@
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Options</a>
-                    <form class="dropdown-menu p-3" aria-labelledby="navbarDropdown">
+                    <form method="post" class="dropdown-menu p-3" action="<?php echo trim($_SERVER["PHP_SELF"]); ?>">
                         <div class="form-group">
-                            <label for="mapDataSourceForm">Map Data Source</label>
-                            <input type="text" class="form-control" id="mapDataSourceForm" placeholder="Enter Source Here...">
+                            <label for="googleMapKey">Google Map Key</label>
+                            <input type="text" name="googleMapKey" class="form-control" value="<?php echo $googleMapKey ?>">
                         </div>
                         <div class="form-group">
-                            <label for="googleMapKeyForm">Google Map Key</label>
-                            <input type="text" class="form-control" id="googleMapKeyForm" placeholder="Enter Key Here...">
+                            <label for="mapDataSource">Map Data Source</label>
+                            <input type="text" name="mapDataSource" class="form-control" value="<?php echo $mapDataSource ?>">
                         </div>
-                        <button type="submit" class="btn btn-primary">Update</button>
+
+                        <button type="submit" name="submit" value="Submit" class="btn btn-primary">Update</button>
                     </form>
                 </li>
             </ul>
         </div>
     </nav>
+
+    <!-- DateTimePicker: Select a date range by choosing a date on Start Date and End Date input fields -->  
     
     <div class="modal fade" id="datePickerModalCenter" tabindex="-1" role="dialog" aria-labelledby="datePickerModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -56,10 +89,12 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
+                    <h6 class="modal-title mb-2" id="startDateFormTitle">Start Date</h6>
                     <div class="input-group date mb-4" id="startDateInputGroup" data-target-input="nearest">     
                         <input id="startDateTimePicker" title="startDateTimePicker" style="width: 100%;" />
                     </div>
-    
+
+                    <h6 class="modal-title mb-2" id="endDateFormTitle">End Date</h6>
                     <div class="input-group date mb-4" id="endDateInputGroup" data-target-input="nearest">
                         <input id="endDateTimePicker" title="endDateTimePicker" style="width: 100%;" />
                     </div>
@@ -75,50 +110,24 @@
 
     <div id="map"></div>
 
-    <?php
-        $googleMapAPI = "https://maps.googleapis.com/maps/api/js?key=";
-        $googleMapKey = "AIzaSyCgW1aVXMAw8od0VT8DnflvrMIVJFofqB4";
-        $googleMapLibrary = "&libraries=places&callback=LoadMap";
+    <!-- Functionality for Google Maps and Date Time Picker -->  
+    <!-- Search limit for GeoJson is 20000 -->
 
-        $mapDataSource = "https://storage.googleapis.com/mapsdevsite/json/quakes.geo.json";
-    ?>
-
-<script>  
+    <script>
 
     var map;
     var markers = [];
     var latitd;
     var longtd;
     var titleName; 
-    var startDate = new Date();
-    var endDate = new Date();
+    var startDate = new Date(2000, 10, 10);
+    var endDate = new Date(2000, 10, 30);
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
             center: new google.maps.LatLng(-26, 140),
             zoom: 3
         });
-
-/*         var script = document.createElement('script');
-        script.setAttribute(
-            'src',
-            ""
-        );
-
-        document.getElementsByTagName('head')[0].appendChild(script);
-
-        map.data.setStyle(function(feature) {
-            var mag = Math.exp(parseFloat(feature.getProperty('mag'))) * 0.1;
-            return /* @type {google.maps.Data.StyleOptions} */ /* ({
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: mag,
-                fillColor: '#f00',  
-                fillOpacity: 0.35,
-                strokeWeight: 0
-                }
-            });
-        }); */
     }
 
     function createMarker(latlng) {
@@ -160,9 +169,10 @@
     }
 
     $(document).ready(function() {
+
         $("#startDateTimePicker").kendoDatePicker({
             format: "yyyy-MMM-dd",
-            value: new Date(2000, 10, 10)
+            value: startDate
         })
                         .closest(".k-widget")
                         .attr("id", "datepicker_wrapper");
@@ -171,7 +181,7 @@
         
         $("#endDateTimePicker").kendoDatePicker( {
             format: "yyyy-MMM-dd",
-            value: new Date(2000, 10, 10)
+            value: endDate
         })
                         .closest(".k-widget")
                         .attr("id", "datepicker_wrapper");
@@ -182,15 +192,19 @@
             startDate = kendo.toString(kendo.parseDate(startDateTimePicker.value()), 'yyyy-MM-dd');
             endDate = kendo.toString(kendo.parseDate(endDateTimePicker.value()), 'yyyy-MM-dd');
             
+            updateMap();
+        });    
+
+        function updateMap() {
             deleteMarkers();
             getQuakes();
             showMarkers();
-        });    
+        }
 
         function getQuakes() {
             // console.log('StartDate: ' + startDate + ', EndDate: ' + endDate + '\n');
             $.ajax({
-                url: 'http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=' + startDate + '&endtime=' + endDate,
+                url: "<?php echo $mapDataSource ?>" + '&starttime=' + startDate + '&endtime=' + endDate,
                 dataType : 'json'
             })
                 .done(function(data) {
@@ -204,7 +218,6 @@
                     };
                     latitd = locationD.latd;
                     longtd = locationD.lngd;
-                    titleName = val.properties.title;
                     // console.log(latitd, longtd);
                     displayMarker();        
                 });
@@ -217,9 +230,11 @@
             });
         }  
     });
-    </script>  
+    
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src= "https://maps.googleapis.com/maps/api/js?key=AIzaSyDrhmCE5YeH0r9Kkeq-v4ZXBd87UvwCOrw&callback=initMap" async defer></script>
+    <script src= "https://maps.googleapis.com/maps/api/js?key=<?php echo $googleMapKey ?>&libraries=places&callback=initMap" async defer></script>
   </body>
 </html>
