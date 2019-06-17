@@ -17,9 +17,9 @@
 </head>
 <body>
 
-    <!-- Form handling --> 
-
     <?php 
+
+    /* Form handling */
 
     $mapDataSourceErr = $googleMapKeyErr = "";
     $mapDataSource = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson";
@@ -31,7 +31,7 @@
         } else {
             $mapDataSource = test_input($_POST["mapDataSource"]);
         }
-    
+
         if (empty($_POST["googleMapKey"])) {
             $googleMapKeyErr = "* Key is required";
         } else {
@@ -41,12 +41,12 @@
 
     function test_input($data) {
         $data = trim($data);
-       return $data; 
+    return $data; 
     }
 
     ?>
 
-    <!-- Fixed Top Navbar: DateTimePicker, Home & Options section -->  
+    <!-- Fixed Top Navbar HTML | DateTimePicker, Home & Options section -->  
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
         <div class= "container">
@@ -76,7 +76,7 @@
         </div>
     </nav>
 
-    <!-- DateTimePicker: Select a date range by choosing a date on Start Date and End Date input fields -->  
+    <!-- DateTimePicker HTML | Select a date range by choosing a date on Start Date & End Date input fields -->  
     
     <div class="modal fade" id="datePickerModalCenter" tabindex="-1" role="dialog" aria-labelledby="datePickerModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -110,10 +110,10 @@
 
     <div id="map"></div>
 
-    <!-- Functionality for Google Maps and Date Time Picker -->  
-    <!-- Search limit for GeoJson is 20000 -->
-
     <script>
+
+    /* Google Maps Functionality */
+    /* Markers: Search limit for GeoJson is 20000 */
 
     var map;
     var markers = [];
@@ -126,7 +126,8 @@
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
             center: new google.maps.LatLng(-26, 140),
-            zoom: 3
+            zoom: 3,
+            disableDefaultUI: true
         });
     }
 
@@ -140,7 +141,6 @@
     }
 
     function displayMarker() {
-        // console.log('Markers: ' + latitd + ':' + longtd + '\n')
         var latlng = new google.maps.LatLng(latitd, longtd);
         createMarker(latlng);
     }
@@ -167,6 +167,8 @@
     function eqfeed_callback(data) {
         map.data.addGeoJson(data);
     }
+
+    /* Kendo Date Picker */
 
     $(document).ready(function() {
 
@@ -195,6 +197,8 @@
             updateMap();
         });    
 
+        /* Update current map and add quakes*/
+
         function updateMap() {
             deleteMarkers();
             getQuakes();
@@ -202,23 +206,22 @@
         }
 
         function getQuakes() {
-            // console.log('StartDate: ' + startDate + ', EndDate: ' + endDate + '\n');
             $.ajax({
                 url: "<?php echo $mapDataSource ?>" + '&starttime=' + startDate + '&endtime=' + endDate,
                 dataType : 'json'
             })
                 .done(function(data) {
 
-                // console.log('data.features: '+ data.features);
                 $.each(data.features, function(key, val) {
                     var coord = val.geometry.coordinates;
                     locationD = {
                         latd: coord[0],
                         lngd: coord[1]
                     };
+
                     latitd = locationD.latd;
                     longtd = locationD.lngd;
-                    // console.log(latitd, longtd);
+
                     displayMarker();        
                 });
             })
