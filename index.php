@@ -22,8 +22,14 @@
     /* Form handling */
 
     $mapDataSourceErr = $googleMapKeyErr = "";
+
+    /* Default Map Data Source Variable | Paste Earthquake Data Source here */
     $mapDataSource = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson";
-    $googleMapKey = "AIzaSyCgW1aVXMAw8od0VT8DnflvrMIVJFofqB4";
+
+    /* Default Map Data Source Variable | Paste Google Map API Key here*/
+    $googleMapKey = "";
+
+    /* Update Variables via the Web Server */
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (empty($_POST["mapDataSource"])) {
@@ -113,7 +119,7 @@
     <script>
 
     /* Google Maps Functionality */
-    /* Markers: Search limit for GeoJson is 20000 */
+    /* Markers | Search limit for GeoJson is 20000 */
 
     var map;
     var markers = [];
